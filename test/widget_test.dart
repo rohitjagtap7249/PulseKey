@@ -1,8 +1,9 @@
-Run flutter analyze --no-fatal-infos
-Analyzing PulseKey...                                           
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pulsekey/main.dart';
 
-warning • Unused import: 'package:pulsekey/main.dart' • test/widget_test.dart:11:8 • unused_import
-  error • The name 'MyApp' isn't a class • test/widget_test.dart:16:35 • creation_with_non_type
-
-2 issues found. (ran in 7.8s)
-Error: Process completed with exit code 1.
+void main() {
+  testWidgets('shows PulseKey title', (WidgetTester tester) async {
+    await tester.pumpWidget(const PulseKeyApp());
+    expect(find.text('PulseKey'), findsOneWidget);
+  });
+}
