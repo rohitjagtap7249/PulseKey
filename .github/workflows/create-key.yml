@@ -1,0 +1,36 @@
+name: Create signing key (run once)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-key:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
+      EXISTING_KEY: ${{ secrets.KEYSTORE_BASE64 }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Stop if a key already exists
+        if: env.EXISTING_KEY != ''
+        run: |
+          echo "A signing key already exists. Not creating another one."
+          exit 1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Create keystore and save it as secrets
+        run: |
+          PASS=$(openssl rand -hex 16)
+          keytool -genkeypair -keystore timer.jks -storetype PKCS12 -alias timer -keyalg RSA -keysize 2048 -validity 36500 -storepass "$PASS" -keypass "$PASS" -dname "CN=Timer"
+          base64 -w0 timer.jks > keystore.b64
+          gh secret set KEYSTORE_BASE64 --repo "$REPO" < keystore.b64
+          gh secret set KEYSTORE_PASSWORD --repo "$REPO" --body "$PASS"
+          gh secret set KEY_ALIAS --repo "$REPO" --body "timer"
+          gh secret set KEY_PASSWORD --repo "$REPO" --body "$PASS"
+          echo "Saved signing secrets."
